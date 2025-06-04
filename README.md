@@ -1,8 +1,9 @@
 # aws-kms-sign-csr
 
 Given an existing CSR (in PEM format) and a keypair in AWS KMS, this script:
-* updates the public key to the public key of the asymmetric keypair
-* signs the CSR with the private key of the asymmetric keypair
+
+- updates the public key to the public key of the asymmetric keypair
+- signs the CSR with the private key of the asymmetric keypair
 
 ## Why would I want to do this?
 
@@ -20,37 +21,25 @@ a CSR is signed with the private key of the generator so that the CA can ensure
 that the public key is owned by the person who is requesting the certificate, and
 this script re-signs with the private key held in KMS.
 
-## Installation
-
-    # create a new virtualenv
-    python3 -m venv aws-kms-sign-csr
-    . aws-kms-sign-csr/bin/activate
-    # install prerequisite modules
-    pip3 install -r requirements.txt
-
 ## Usage
 
-### RSA
-
-    # generate a PEM csr - the key doesn't matter as it will be replaced
-    openssl req -new -newkey rsa:2048 -keyout /dev/null -nodes -out test.csr
-    ./aws-kms-sign-csr.py --region eu-west-1 --keyid alias/mykeyalias --hashalgo sha256 test.csr > new.csr
-
-### ECDSA
-    # Create a fake key
-    openssl ecparam -genkey -name secp256k1 -out fake.key -genkey
-    # Create CSR from fake key
-    openssl req -new -key fake.key -out test.csr
-    # Update CSR using KMS key
-    ./aws-kms-sign-csr.py --region eu-west-1 --keyid alias/mykeyalias --hashalgo sha256 --signalgo ECDSA test.csr > new.csr
-
-
-The script will use your existing AWS credentials: to override use environment variables per https://boto3.amazonaws.com/v1/documentation/api/latest/guide/configuration.html
-
-The key ID can be a key ARN, an actual key ID, a key alias (prefixed with alias/), or a key alias ARN. See https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/kms.html#KMS.Client.sign for more info.
+```
+docker build --tag aws-kms-sign-csr:latest .
+AWS_PROFILE=your_profile
+KMS_KEY_ID=key_uuid
+CSR=absolute_csr_path
+docker run \
+    -e AWS_PROFILE \
+    -v ~/.aws:/root/.aws \
+    -v $CSR:/app/unsigned.csr \
+    aws-kms-sign-csr:latest \
+    --region us-east-1 \
+    --keyid $KMS_KEY_ID \
+    --hashalgo sha256 /app/unsigned.csr > signed.csr
+```
 
 ## Limitations
 
-* only supports RSA with sha256, sha384 and sha512 and ECDSA with sha224, sha256, sha384, sha512 at time of writing
-* should have better error handling
-* should have better handling of boto profiles
+- only supports RSA with sha256, sha384 and sha512 and ECDSA with sha224, sha256, sha384, sha512 at time of writing
+- should have better error handling
+- should have better handling of boto profiles
