@@ -23,7 +23,7 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          tags: docker/aws-kms-sign-csr:${{ inputs.version }}
+          tags: docker/aws-kms-sign-csr:dev
           push: false
           provenance: mode=max
           sbom: true
